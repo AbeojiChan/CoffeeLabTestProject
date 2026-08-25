@@ -4,71 +4,92 @@ using UnityEngine.UI;
 
 public class HoldGrindButton : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
 {
-	#region Publics
+    #region Publics
+    #endregion
 
+    #region Unity API
 
-	#endregion
+    private void Update()
+    {
+        if (!_isHolding || _isComplete || _dropZone == null || _dropZone.CurrentIngredientDataHolder == null) return;
 
-	#region Unity API
+        IngredientsData data = _dropZone.CurrentIngredientDataHolder.Data;
+        if (data == null) return;
 
-	private void Update()
-	{
-		if (!_isHolding || _isComplete) return;
-		_currentProgress += Time.deltaTime;
+        _currentProgress += Time.deltaTime;
 
-		if (_progressBar != null)
-		{
-			_progressBar.fillAmount = Mathf.Clamp01(_currentProgress / _grindDuration);
-		}
-
-        if (_currentProgress >= _grindDuration)
+        if (_progressBar != null)
         {
-            _isComplete = true;
+            _progressBar.fillAmount = Mathf.Clamp01(_currentProgress / data.GrindDuration);
+        }
+
+        if (_currentProgress >= data.GrindDuration)
+        {
             _isHolding = false;
+            _currentProgress = 0f;
+            if (_progressBar != null)
+            {
+                _progressBar.fillAmount = 0f;
+            }
+
+            GameObject productToSpawn = data.ProcessedPrefab;
+
             _dropZone.ConsumeIngredient();
-            Debug.Log("Beans ground successfully!");
-			GameObject spawned = Instantiate(_finishedProduct, _finishedProductSpawnPoint.position, Quaternion.identity, transform.parent);
-			spawned.transform.SetAsLastSibling();
-		}
+
+            if (productToSpawn != null && _finishedProductSpawnPoint != null)
+            {
+                Canvas canvas = GetComponentInParent<Canvas>();
+                Transform parentToUse = canvas != null ? canvas.transform : transform.parent;
+                GameObject spawned = Instantiate(productToSpawn, _finishedProductSpawnPoint.position, Quaternion.identity, parentToUse);
+                spawned.transform.localScale = Vector3.one;
+                spawned.transform.SetAsLastSibling();
+            }
+
+            Debug.Log($"produced : {data.name}");
+        }
     }
 
-	#endregion
+    #endregion
 
-	#region Main API
-	public void OnPointerDown(PointerEventData eventData)
-	{
-		if (_dropZone != null && _dropZone.CurrentIngredient != null && !_isComplete)
-		{
-			_isHolding = true;
-		}
-	}
+    #region Main API
 
-	public void OnPointerUp(PointerEventData eventData)
-	{
-		_isHolding = false;
-	}
-	#endregion
-
-	#region Tools and Utilities
-	#endregion
-
-	#region Private and Protected
-
-	[Header("References")]
-	[SerializeField] private GrinderDropZone _dropZone;
-	[SerializeField] private Image _progressBar;
-
-	[SerializeField] private GameObject _finishedProduct;
-
-	[SerializeField] private Transform _finishedProductSpawnPoint;
-
-	[Header("Settings")]
-	[SerializeField] private float _grindDuration = 2.5f;
-
-	private bool _isHolding = false;
-	private float _currentProgress = 0f;
-
-	private bool _isComplete = false;
-	#endregion
-
+    public void OnPointerDown(PointerEventData eventData)
+    {
+        if (_dropZone != null && _dropZone.CurrentIngredientDataHolder != null && !_isComplete)
+        {
+            _isHolding = true;
+        }
     }
+
+    public void OnPointerUp(PointerEventData eventData)
+    {
+        _isHolding = false;
+    }
+
+    #endregion
+
+    #region Tools and Utilities
+
+    public void ResetGrinder()
+    {
+        _isComplete = false;
+        _isHolding = false;
+        _currentProgress = 0f;
+        if (_progressBar != null) _progressBar.fillAmount = 0f;
+    }
+
+    #endregion
+
+    #region Private and Protected
+
+    [Header("References")]
+    [SerializeField] private GrinderDropZone _dropZone;
+    [SerializeField] private Image _progressBar;
+    [SerializeField] private Transform _finishedProductSpawnPoint;
+
+    private bool _isHolding = false;
+    private float _currentProgress = 0f;
+    private bool _isComplete = false;
+
+    #endregion
+}

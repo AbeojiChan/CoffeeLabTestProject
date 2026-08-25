@@ -255,9 +255,124 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::HoldGrindButton
   _dropZone: {fileID: 1183888636}
   _progressBar: {fileID: 2041567898}
-  _finishedProduct: {fileID: 4504788547465348252, guid: 633866852c9992842b7dfd9a1c001a75, type: 3}
   _finishedProductSpawnPoint: {fileID: 1560227219}
-  _grindDuration: 2.5
+--- !u!1 &818349430
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 818349431}
+  - component: {fileID: 818349435}
+  - component: {fileID: 818349434}
+  - component: {fileID: 818349433}
+  - component: {fileID: 818349432}
+  - component: {fileID: 818349436}
+  m_Layer: 5
+  m_Name: Milk
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &818349431
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 818349430}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1535800727}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.142, y: 0.723463}
+  m_AnchorMax: {x: 0.28638545, y: 1}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &818349432
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 818349430}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1aa77eed574c2f649a4f818741588755, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DraggableItem
+  m_isInsideZone: 0
+  _data: {fileID: 0}
+--- !u!225 &818349433
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 818349430}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
+--- !u!114 &818349434
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 818349430}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 1
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Sprite: {fileID: 21300000, guid: f8b3eafe9fe3a424585fb35b37f086c0, type: 3}
+  m_Type: 0
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
+--- !u!222 &818349435
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 818349430}
+  m_CullTransparentMesh: 1
+--- !u!114 &818349436
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 818349430}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 298a86c1db6296a43ad8006214786aa9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::IngredientItem
+  m_data: {fileID: 11400000, guid: 98674ec93e5eba247a6c515d92de586c, type: 2}
 --- !u!1 &969445121
 GameObject:
   m_ObjectHideFlags: 0
@@ -916,6 +1031,7 @@ GameObject:
   - component: {fileID: 1332304880}
   - component: {fileID: 1332304883}
   - component: {fileID: 1332304882}
+  - component: {fileID: 1332304884}
   m_Layer: 5
   m_Name: Coffee Beans
   m_TagString: Untagged
@@ -935,12 +1051,12 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 0}
+  m_Father: {fileID: 1535800727}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0.70400006}
-  m_AnchorMax: {x: 0.20038298, y: 1}
-  m_AnchoredPosition: {x: 66.006134, y: 272.81042}
-  m_SizeDelta: {x: 132.0123, y: 94.77919}
+  m_AnchorMin: {x: 0, y: 0.723463}
+  m_AnchorMax: {x: 0.142, y: 1}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1332304880
 MonoBehaviour:
@@ -992,7 +1108,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1aa77eed574c2f649a4f818741588755, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DraggableItem
-  isInsideGrinder: 0
+  m_isInsideZone: 0
+  _data: {fileID: 11400000, guid: 81e2acb1ef5a1ba46a4050dc1e81923b, type: 2}
 --- !u!225 &1332304883
 CanvasGroup:
   m_ObjectHideFlags: 0
@@ -1005,6 +1122,19 @@ CanvasGroup:
   m_Interactable: 1
   m_BlocksRaycasts: 1
   m_IgnoreParentGroups: 0
+--- !u!114 &1332304884
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1332304878}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 298a86c1db6296a43ad8006214786aa9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::IngredientItem
+  m_data: {fileID: 11400000, guid: 81e2acb1ef5a1ba46a4050dc1e81923b, type: 2}
 --- !u!1 &1521853229
 GameObject:
   m_ObjectHideFlags: 0
@@ -1131,11 +1261,13 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1267594071}
-  - {fileID: 1312716629}
+  - {fileID: 1332304879}
+  - {fileID: 818349431}
   - {fileID: 1183888633}
   - {fileID: 719294237}
   - {fileID: 2041567897}
   - {fileID: 1828956214}
+  - {fileID: 1312716629}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -1322,6 +1454,7 @@ GameObject:
   - component: {fileID: 1828956214}
   - component: {fileID: 1828956216}
   - component: {fileID: 1828956215}
+  - component: {fileID: 1828956217}
   m_Layer: 5
   m_Name: Panel
   m_TagString: Untagged
@@ -1386,6 +1519,20 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1828956213}
   m_CullTransparentMesh: 1
+--- !u!114 &1828956217
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1828956213}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e2ee6de88f86b9c468f2eacb2721b645, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BeakerDropZone
+  m_maxDoses: 7
+  _itemsContainer: {fileID: 1828956214}
 --- !u!1 &1853687863
 GameObject:
   m_ObjectHideFlags: 0
@@ -1501,5 +1648,4 @@ SceneRoots:
   - {fileID: 1521853230}
   - {fileID: 1535800727}
   - {fileID: 1853687864}
-  - {fileID: 1332304879}
   - {fileID: 1560227219}

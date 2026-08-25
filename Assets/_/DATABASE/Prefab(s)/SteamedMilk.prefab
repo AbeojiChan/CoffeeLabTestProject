@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 2976887521654619309}
   - component: {fileID: 7387011212377001102}
   m_Layer: 0
-  m_Name: GroundedCoffee
+  m_Name: SteamedMilk
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -67,7 +67,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 30ec6a5b9dc79ae45b997478a7f8ccf9, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 9695836576bd5334d81ca57abef7c164, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -101,4 +101,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1aa77eed574c2f649a4f818741588755, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DraggableItem
+  m_data: {fileID: 0}
   isInsideGrinder: 0
