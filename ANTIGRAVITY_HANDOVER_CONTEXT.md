@@ -7,7 +7,7 @@ This document contains the complete context, architectural state, design decisio
 ## 📌 Project & Repository Overview
 
 - **Repository**: [https://github.com/AbeojiChan/CoffeeLabTestProject.git](https://github.com/AbeojiChan/CoffeeLabTestProject.git) (`main` branch)
-- **Engine**: Unity 6 (6000.0.31f1) / Universal Render Pipeline (URP)
+- **Engine**: Unity 6 (6000.3.13f1) / Universal Render Pipeline (URP)
 - **Primary Goal**: Transitioning from procedural UI prototyping to a **physical, GameObject-oriented / diegetic 3D workbench gameplay experience**.
 
 ---
