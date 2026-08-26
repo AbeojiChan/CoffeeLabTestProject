@@ -1,0 +1,41 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 60e7a8663a435f24788b488689061f0e, type: 3}
+  m_Name: Recipe_Sock_Juice
+  m_EditorClassIdentifier: Assembly-CSharp::MolecularBrewing.Preparation.RecipeData
+  m_recipeId: recipe_Sock_Juice
+  m_recipeName: Sock Juice
+  m_cityOrigin: 0
+  m_icon: {fileID: 21300000, guid: a171693ac8611ea4aa2d89f437d20fe8, type: 3}
+  m_description: Desc. Loading...
+  m_isUnlocked: 1
+  m_hasSpecialEffect: 0
+  m_inherentEffectName: 
+  m_inherentEffectDescription: "Acc\xE9l\xE8re le traitement de l'information."
+  m_requiredRawIngredients:
+  - {fileID: 11400000, guid: 488e6403947eff7459fd5d0f5c8487f3, type: 2}
+  - {fileID: 11400000, guid: 91265573c36d2ee40a30971c549c5621, type: 2}
+  - {fileID: 11400000, guid: 7980b83c37e9fe249bc6f14cecf9e3cc, type: 2}
+  m_linkedAdditiveEffects: []
+  m_requiredMolecules:
+  - m_moleculeName: Caffeine
+    m_requiredCount: 2
+  - m_moleculeName: Chlorogenic Acid
+    m_requiredCount: 1
+  - m_moleculeName: Catalyst
+    m_requiredCount: 1
+  - m_moleculeName: NeuralOverclock
+    m_requiredCount: 1
+  - m_moleculeName: MineralSalt
+    m_requiredCount: 1
+  - m_moleculeName: Water
+    m_requiredCount: 3

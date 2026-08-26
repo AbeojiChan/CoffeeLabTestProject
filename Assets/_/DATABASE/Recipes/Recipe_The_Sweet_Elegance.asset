@@ -1,0 +1,39 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 60e7a8663a435f24788b488689061f0e, type: 3}
+  m_Name: Recipe_The_Sweet_Elegance
+  m_EditorClassIdentifier: Assembly-CSharp::MolecularBrewing.Preparation.RecipeData
+  m_recipeId: recipe_The_Sweet_Elegance
+  m_recipeName: The Sweet Elegance
+  m_cityOrigin: 1
+  m_icon: {fileID: 21300000, guid: dff23736f4828dd489d6a66d07936cb4, type: 3}
+  m_description: Desc. Loading...
+  m_isUnlocked: 0
+  m_hasSpecialEffect: 0
+  m_inherentEffectName: 
+  m_inherentEffectDescription: 
+  m_requiredRawIngredients:
+  - {fileID: 11400000, guid: 488e6403947eff7459fd5d0f5c8487f3, type: 2}
+  - {fileID: 11400000, guid: 2659e2106e9e627439b6a643b41c7589, type: 2}
+  - {fileID: 11400000, guid: 7980b83c37e9fe249bc6f14cecf9e3cc, type: 2}
+  m_linkedAdditiveEffects: []
+  m_requiredMolecules:
+  - m_moleculeName: Caffeine
+    m_requiredCount: 2
+  - m_moleculeName: Chlorogenic Acid
+    m_requiredCount: 2
+  - m_moleculeName: L-Theanine
+    m_requiredCount: 1
+  - m_moleculeName: BioFlavonoid
+    m_requiredCount: 1
+  - m_moleculeName: Water
+    m_requiredCount: 3

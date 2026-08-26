@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f7b22062be061064e95a35c4ce91d915, type: 3}
+  m_Name: Effect_Calm
+  m_EditorClassIdentifier: Assembly-CSharp::MolecularBrewing.Preparation.AdditiveEffectData
+  m_effectId: effect_calm
+  m_effectName: Calming
+  m_icon: {fileID: 10901, guid: 0000000000000000f000000000000000, type: 0}
+  m_effectDescription: Chill out man/girl, you gotta relax
+  m_isUnlocked: 1
+  m_requiredAdditives:
+  - {fileID: 11400000, guid: 7deed2411590e244a8cfedb86f679a92, type: 2}
