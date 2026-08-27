@@ -16,6 +16,9 @@ namespace MolecularBrewing.Preparation
         public RetractableSidePanel m_leftDrawer;
         public RetractableSidePanel m_rightDrawer;
 
+        [Header("Machine Screen (Phase 2 Canvas)")]
+        public PreparationMachineScreen m_machineScreen;
+
         [Header("Background & Frame")]
         public Image m_tabletBackground;
         public Image m_tabletBezel;
@@ -45,6 +48,11 @@ namespace MolecularBrewing.Preparation
             if (m_recipeCodexPanel != null)
             {
                 m_recipeCodexPanel.CheckAndUnlockRecipeAndEffects(chosenIngredients);
+            }
+
+            if (m_machineScreen != null)
+            {
+                m_machineScreen.OpenWithIngredients(chosenIngredients);
             }
         }
 

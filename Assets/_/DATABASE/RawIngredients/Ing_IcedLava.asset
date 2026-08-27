@@ -16,7 +16,7 @@ MonoBehaviour:
   m_displayName: Iced-Lava
   m_ingredientType: 1
   m_origin: 2
-  m_sprite: {fileID: 0}
+  m_sprite: {fileID: 21300000, guid: f8b3eafe9fe3a424585fb35b37f086c0, type: 3}
   m_themeColor: {r: 0.95, g: 0.55, b: 0.25, a: 1}
   m_targetChamber: 2
   m_processingDuration: 2.5

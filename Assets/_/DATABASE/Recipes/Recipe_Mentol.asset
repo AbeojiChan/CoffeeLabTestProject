@@ -15,7 +15,7 @@ MonoBehaviour:
   m_recipeId: recipe_Mentol
   m_recipeName: Mentol
   m_cityOrigin: 1
-  m_icon: {fileID: 0}
+  m_icon: {fileID: 21300000, guid: ff7871870d0cd8d4886e5a843048737b, type: 3}
   m_description: Desc. Loading...
   m_isUnlocked: 0
   m_hasSpecialEffect: 0
