@@ -141,13 +141,9 @@ namespace MolecularBrewing.Preparation.Editor
             synthCtrl.m_synthesizeButton = synthBtnObj.GetComponent<Button>();
 
             // ====================================================
-            // FAR RIGHT: RETRACTABLE RECIPES CODEX PULL TAB
+            // RESULT MODAL (Brew Result & Serve / Discard)
             // ====================================================
-            GameObject codexTabBtnObj = CreateButtonObject("PullTab_Codex", synthObj.transform, "RECIPES", new Color(0.30f, 0.45f, 0.60f, 1f));
-            RectTransform codexTabRect = codexTabBtnObj.GetComponent<RectTransform>();
-            codexTabRect.anchorMin = new Vector2(0.965f, 0.85f);
-            codexTabRect.anchorMax = new Vector2(1.0f, 0.92f);
-            codexTabRect.anchoredPosition = Vector2.zero;
+            CreateBrewResultModal(synthObj.transform, synthCtrl);
 
             if (machineScreen != null)
             {
@@ -157,6 +153,92 @@ namespace MolecularBrewing.Preparation.Editor
 
             EditorUtility.SetDirty(synthObj);
             return synthCtrl;
+        }
+
+        private static void CreateBrewResultModal(Transform parent, MolecularSynthesisScreen synthCtrl)
+        {
+            GameObject modalObj = CreateUIObject("BrewResultModal", parent, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
+            modalObj.transform.SetAsLastSibling();
+
+            CanvasGroup cg = modalObj.AddComponent<CanvasGroup>();
+            cg.alpha = 0f;
+            cg.interactable = false;
+            cg.blocksRaycasts = false;
+
+            // Semi-transparent dark backdrop
+            Image backdrop = modalObj.AddComponent<Image>();
+            backdrop.color = new Color(0f, 0f, 0f, 0.85f);
+
+            // Central Card Container
+            GameObject cardObj = CreateUIObject("CardContainer", modalObj.transform, new Vector2(0.28f, 0.12f), new Vector2(0.72f, 0.88f), Vector2.zero, Vector2.zero);
+            Image cardBg = cardObj.AddComponent<Image>();
+            cardBg.color = new Color(0.08f, 0.11f, 0.16f, 0.98f);
+
+            // Title Banner
+            GameObject titleObj = CreateUIObject("HeaderBanner", cardObj.transform, new Vector2(0f, 0.88f), new Vector2(1f, 1f), Vector2.zero, Vector2.zero);
+            Image titleBg = titleObj.AddComponent<Image>();
+            titleBg.color = new Color(0.12f, 0.18f, 0.25f, 1f);
+
+            GameObject titleText = CreateTextObject("TitleText", titleObj.transform, "❖  FORMULATION RÉUSSIE  ❖", 18, FontStyle.Bold, TextAnchor.MiddleCenter, Vector2.zero, Vector2.one);
+
+            // Drink Sprite Presentation Pedestal
+            GameObject pedestal = CreateUIObject("DrinkPedestal", cardObj.transform, new Vector2(0.32f, 0.52f), new Vector2(0.68f, 0.86f), Vector2.zero, Vector2.zero);
+            Image pedBg = pedestal.AddComponent<Image>();
+            pedBg.color = new Color(0.12f, 0.16f, 0.22f, 0.90f);
+
+            GameObject drinkSpriteObj = CreateUIObject("DrinkSprite", pedestal.transform, new Vector2(0.15f, 0.10f), new Vector2(0.85f, 0.90f), Vector2.zero, Vector2.zero);
+            Image drinkImg = drinkSpriteObj.AddComponent<Image>();
+            drinkImg.preserveAspect = true;
+
+            // Load default beer/drink sprite placeholder
+            Sprite demoSprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/_/CONTENT/External/Sprite(s)/Beers/Cream Ale.png");
+            if (demoSprite != null)
+            {
+                drinkImg.sprite = demoSprite;
+            }
+
+            // Drink Name & Origin Tag
+            GameObject nameObj = CreateTextObject("DrinkName", cardObj.transform, "Espresso Overclock", 22, FontStyle.Bold, TextAnchor.MiddleCenter, new Vector2(0.05f, 0.44f), new Vector2(0.95f, 0.51f));
+            GameObject originObj = CreateTextObject("OriginTag", cardObj.transform, "[ ORIGINE : NEO FREMIO ]", 14, FontStyle.Bold, TextAnchor.MiddleCenter, new Vector2(0.05f, 0.38f), new Vector2(0.95f, 0.44f));
+
+            // Description Box
+            GameObject descBox = CreateUIObject("DescBox", cardObj.transform, new Vector2(0.06f, 0.24f), new Vector2(0.94f, 0.37f), Vector2.zero, Vector2.zero);
+            Image descBg = descBox.AddComponent<Image>();
+            descBg.color = new Color(0.05f, 0.07f, 0.10f, 0.85f);
+            GameObject descText = CreateTextObject("DescText", descBox.transform, "Double stimulation neuronale par extraction intense de caféine.", 14, FontStyle.Normal, TextAnchor.MiddleCenter, new Vector2(0.04f, 0.05f), new Vector2(0.96f, 0.95f));
+
+            // Effects Summary
+            GameObject effectsBox = CreateUIObject("EffectsBox", cardObj.transform, new Vector2(0.06f, 0.13f), new Vector2(0.94f, 0.23f), Vector2.zero, Vector2.zero);
+            Image effBg = effectsBox.AddComponent<Image>();
+            effBg.color = new Color(0.05f, 0.07f, 0.10f, 0.85f);
+            GameObject effectsText = CreateTextObject("EffectsText", effectsBox.transform, "• Effet Inhérent : Neutre (Saveur Standard)", 13, FontStyle.Normal, TextAnchor.MiddleLeft, new Vector2(0.04f, 0.05f), new Vector2(0.96f, 0.95f));
+
+            // Bottom Buttons Container (Serve vs Discard)
+            GameObject btnContainer = CreateUIObject("ButtonsContainer", cardObj.transform, new Vector2(0.06f, 0.02f), new Vector2(0.94f, 0.11f), Vector2.zero, Vector2.zero);
+            HorizontalLayoutGroup bLayout = btnContainer.AddComponent<HorizontalLayoutGroup>();
+            bLayout.spacing = 16;
+            bLayout.childControlWidth = true;
+            bLayout.childControlHeight = true;
+            bLayout.childForceExpandWidth = true;
+
+            GameObject discardBtnObj = CreateButtonObject("DiscardButton", btnContainer.transform, "JETER / REJOUER 🗑️", new Color(0.70f, 0.25f, 0.25f, 1f));
+            GameObject serveBtnObj = CreateButtonObject("ServeButton", btnContainer.transform, "SERVIR LA BOISSON ☕", new Color(0.18f, 0.78f, 0.45f, 1f));
+
+            // Modal Component setup
+            BrewResultModal modal = modalObj.AddComponent<BrewResultModal>();
+            modal.m_modalCanvasGroup = cg;
+            modal.m_drinkSpriteImage = drinkImg;
+            modal.m_headerTitleText = titleText.GetComponent<Text>();
+            modal.m_drinkNameText = nameObj.GetComponent<Text>();
+            modal.m_originTagText = originObj.GetComponent<Text>();
+            modal.m_descriptionText = descText.GetComponent<Text>();
+            modal.m_effectsSummaryText = effectsText.GetComponent<Text>();
+            modal.m_cardBackground = cardBg;
+            modal.m_serveDrinkButton = serveBtnObj.GetComponent<Button>();
+            modal.m_discardButton = discardBtnObj.GetComponent<Button>();
+            modal.m_defaultSuccessSprite = demoSprite;
+
+            synthCtrl.m_brewResultModal = modal;
         }
 
         public static PreparationMachineScreen BuildMachineOverlayScreen(Canvas canvas, PreparationTabletScreen tabletScreen)

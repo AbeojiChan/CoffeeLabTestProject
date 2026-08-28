@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -36,11 +36,15 @@ namespace MolecularBrewing.Preparation
         public Text m_statusPromptText;
         public Text m_bondCounterText;
 
+        [Header("Result Modal")]
+        public BrewResultModal m_brewResultModal;
+
         [Header("Screen Control")]
         public CanvasGroup m_screenCanvasGroup;
 
         public event Action OnBackToPrepMachine;
         public event Action<RecipeData> OnSynthesisSuccess;
+        public event Action OnSessionFinished;
 
         public bool IsScreenOpen => _isOpen;
 
@@ -69,6 +73,19 @@ namespace MolecularBrewing.Preparation
             if (m_backToPrepButton != null)
             {
                 m_backToPrepButton.onClick.AddListener(HandleBackToPrep);
+            }
+
+            if (m_brewResultModal == null)
+            {
+                m_brewResultModal = GetComponentInChildren<BrewResultModal>(true) ?? FindFirstObjectByType<BrewResultModal>();
+            }
+
+            if (m_brewResultModal != null)
+            {
+                m_brewResultModal.OnDrinkServed -= HandleDrinkServed;
+                m_brewResultModal.OnDrinkServed += HandleDrinkServed;
+                m_brewResultModal.OnDrinkDiscarded -= HandleDrinkDiscarded;
+                m_brewResultModal.OnDrinkDiscarded += HandleDrinkDiscarded;
             }
         }
 
@@ -125,26 +142,68 @@ namespace MolecularBrewing.Preparation
         {
             Debug.Log($"<color=cyan><b>[MolecularSynthesis]</b> Synthesizing with {_activeBonds.Count} active bonds...</color>");
 
-            // Evaluate concoction
+            // 1. Separate base ingredients from additives
+            List<RawIngredientItemData> baseIngredients = _activeIngredients.FindAll(i => i != null && i.m_ingredientType == RawIngredientType.Base);
+            List<RawIngredientItemData> additiveIngredients = _activeIngredients.FindAll(i => i != null && i.m_ingredientType == RawIngredientType.Additive);
+
+            // 2. Evaluate Base Recipe match
             RecipeData matchedRecipe = null;
             if (m_recipeCodexPanel != null && m_recipeCodexPanel.m_recipes != null)
             {
                 foreach (var r in m_recipeCodexPanel.m_recipes)
                 {
-                    if (r != null)
+                    if (r != null && DoesIngredientsMatch(r.m_requiredRawIngredients, baseIngredients))
                     {
                         matchedRecipe = r;
+                        matchedRecipe.Unlock();
                         break;
                     }
                 }
             }
 
+            // 3. Evaluate Additive Synergies match
+            List<AdditiveEffectData> matchedAdditiveEffects = new List<AdditiveEffectData>();
+            if (m_recipeCodexPanel != null && m_recipeCodexPanel.m_additiveEffects != null && additiveIngredients.Count > 0)
+            {
+                foreach (var eff in m_recipeCodexPanel.m_additiveEffects)
+                {
+                    if (eff != null && eff.MatchesAdditives(additiveIngredients))
+                    {
+                        eff.Unlock();
+                        matchedAdditiveEffects.Add(eff);
+                    }
+                }
+            }
+
+            // 4. Update prompt & trigger success event
             if (m_statusPromptText != null)
             {
-                m_statusPromptText.text = "<color=#20DF80><b>SYNTHÈSE RÉUSSIE !</b> La boisson moléculaire a été formulée avec succès.</color>";
+                if (matchedRecipe != null)
+                {
+                    m_statusPromptText.text = $"<color=#20DF80><b>SYNTHÈSE RÉUSSIE !</b> {matchedRecipe.m_recipeName} formulé avec succès.</color>";
+                }
+                else
+                {
+                    m_statusPromptText.text = "<color=#FF8844><b>MÉLANGE INSTABLE :</b> Aucun blueprint répertorié pour cette combinaison.</color>";
+                }
             }
 
             OnSynthesisSuccess?.Invoke(matchedRecipe);
+
+            // 5. Open Brew Result Modal (Always opens: whether known recipe or failed Barista Trial!)
+            if (m_brewResultModal == null)
+            {
+                m_brewResultModal = GetComponentInChildren<BrewResultModal>(true) ?? FindFirstObjectByType<BrewResultModal>();
+            }
+
+            if (m_brewResultModal != null)
+            {
+                m_brewResultModal.DisplayResult(matchedRecipe, matchedAdditiveEffects, _activeIngredients);
+            }
+            else
+            {
+                Debug.LogWarning("[MolecularSynthesisScreen] No BrewResultModal found in hierarchy! Please run 'Tools > Preparation 0.2 > Build Molecular Synthesis Screen'.");
+            }
         }
 
         #endregion
@@ -212,7 +271,6 @@ namespace MolecularBrewing.Preparation
                 rt.sizeDelta = new Vector2(56, 56);
             }
 
-            // Spawn at random position inside crucible radius
             float angle = UnityEngine.Random.Range(0f, Mathf.PI * 2f);
             float dist = UnityEngine.Random.Range(20f, m_crucibleRadius * 0.75f);
             RectTransform rect = obj.GetComponent<RectTransform>();
@@ -221,10 +279,8 @@ namespace MolecularBrewing.Preparation
             FloatingMoleculeNode node = obj.GetComponent<FloatingMoleculeNode>() ?? obj.AddComponent<FloatingMoleculeNode>();
             node.Setup(moleculeName, themeColor, m_crucibleRadius, center);
 
-            // Wire Left-Click
             node.OnMoleculeClicked += HandleNodeClicked;
 
-            // Wire Right-Click Bond Drawing
             node.OnBondDrawStart += HandleBondDrawStart;
             node.OnBondDrawUpdate += HandleBondDrawUpdate;
             node.OnBondDrawEnd += HandleBondDrawEnd;
@@ -248,7 +304,6 @@ namespace MolecularBrewing.Preparation
             }
             else
             {
-                // Create or toggle bond between _selectedNode and clickedNode
                 ToggleBond(_selectedNode, clickedNode);
                 _selectedNode.SetSelected(false);
                 _selectedNode = null;
@@ -292,7 +347,7 @@ namespace MolecularBrewing.Preparation
                 _previewBondLine.transform.SetAsFirstSibling();
 
                 Image img = _previewBondLine.GetComponent<Image>();
-                img.color = new Color(0.95f, 0.85f, 0.25f, 0.85f); // Golden yellow preview line
+                img.color = new Color(0.95f, 0.85f, 0.25f, 0.85f);
                 img.raycastTarget = false;
             }
             UpdatePreviewLine(startPos, currentPos);
@@ -384,6 +439,63 @@ namespace MolecularBrewing.Preparation
             {
                 m_statusPromptText.text = "Cliquez-droit & glissez entre 2 molécules pour créer des liaisons chimiques.";
             }
+        }
+
+        private bool DoesIngredientsMatch(List<RawIngredientItemData> recipeReqs, List<RawIngredientItemData> currentItems)
+        {
+            if (recipeReqs == null || currentItems == null) return false;
+            if (recipeReqs.Count != currentItems.Count) return false;
+
+            List<string> reqIds = new List<string>();
+            foreach (var r in recipeReqs) if (r != null) reqIds.Add(r.m_id);
+
+            List<string> curIds = new List<string>();
+            foreach (var c in currentItems) if (c != null) curIds.Add(c.m_id);
+
+            reqIds.Sort();
+            curIds.Sort();
+
+            for (int i = 0; i < reqIds.Count; i++)
+            {
+                if (reqIds[i] != curIds[i]) return false;
+            }
+
+            return true;
+        }
+
+        private void HandleDrinkServed(RecipeData recipe, List<AdditiveEffectData> additiveEffects)
+        {
+            Debug.Log($"<color=green><b>[MolecularSynthesis]</b> Drink successfully served to customer!</color>");
+            CloseScreen();
+
+            // Return all the way to tablet screen and reset
+            var machine = FindFirstObjectByType<PreparationMachineScreen>();
+            if (machine != null) machine.CloseScreen();
+
+            var tablet = FindFirstObjectByType<PreparationTabletScreen>();
+            if (tablet != null && tablet.m_trayController != null)
+            {
+                tablet.m_trayController.ResetTray();
+            }
+
+            OnSessionFinished?.Invoke();
+        }
+
+        private void HandleDrinkDiscarded()
+        {
+            Debug.Log("<color=yellow><b>[MolecularSynthesis]</b> Drink discarded. Returning to preparation.</color>");
+            CloseScreen();
+
+            var machine = FindFirstObjectByType<PreparationMachineScreen>();
+            if (machine != null) machine.CloseScreen();
+
+            var tablet = FindFirstObjectByType<PreparationTabletScreen>();
+            if (tablet != null && tablet.m_trayController != null)
+            {
+                tablet.m_trayController.ResetTray();
+            }
+
+            OnSessionFinished?.Invoke();
         }
 
         #endregion
