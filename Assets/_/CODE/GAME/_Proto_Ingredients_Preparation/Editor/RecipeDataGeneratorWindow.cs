@@ -1,6 +1,8 @@
-﻿#if UNITY_EDITOR
+#if UNITY_EDITOR
+using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using UnityEditor;
 using UnityEngine;
 
@@ -14,7 +16,7 @@ namespace MolecularBrewing.Preparation.Editor
         public static void OpenWindow()
         {
             var window = GetWindow<RecipeDataGeneratorWindow>("Recipe & Additive Generator");
-            window.minSize = new Vector2(500, 650);
+            window.minSize = new Vector2(550, 750);
             window.Show();
         }
 
@@ -23,14 +25,23 @@ namespace MolecularBrewing.Preparation.Editor
 
         #region Unity API
 
+        private void OnEnable()
+        {
+            if (_customMolecules.Count == 0)
+            {
+                _customMolecules.Add(new MoleculeRequirement { m_moleculeName = "Caffeine", m_requiredCount = 2 });
+                _customMolecules.Add(new MoleculeRequirement { m_moleculeName = "Water", m_requiredCount = 3 });
+            }
+        }
+
         private void OnGUI()
         {
             EditorGUILayout.Space(10);
             EditorGUILayout.LabelField("🛠️ COFFEE LAB - RECIPE & ADDITIVE GENERATOR", EditorStyles.boldLabel);
-            EditorGUILayout.HelpBox("Upper section: Base Drinks in 3 City Columns (Neo / Mix / Heart).\nLower section: Additive Synergy Effects linkable to base drinks.", MessageType.Info);
+            EditorGUILayout.HelpBox("Configure Base Drinks (with precise molecule requirements and sprites) and Additive Synergy Effects.", MessageType.Info);
             EditorGUILayout.Space(10);
 
-            _selectedTab = GUILayout.Toolbar(_selectedTab, new[] { "1. Base Recipe Creator", "2. Additive Effect Creator", "3. Batch Generator" });
+            _selectedTab = GUILayout.Toolbar(_selectedTab, new[] { "1. Base Recipe Creator", "2. Additive Effect Creator" });
             EditorGUILayout.Space(10);
 
             _scrollPos = EditorGUILayout.BeginScrollView(_scrollPos);
@@ -39,13 +50,9 @@ namespace MolecularBrewing.Preparation.Editor
             {
                 DrawBaseRecipeCreator();
             }
-            else if (_selectedTab == 1)
-            {
-                DrawAdditiveEffectCreator();
-            }
             else
             {
-                DrawBatchGenerator();
+                DrawAdditiveEffectCreator();
             }
 
             EditorGUILayout.EndScrollView();
@@ -58,13 +65,14 @@ namespace MolecularBrewing.Preparation.Editor
 
         private void DrawBaseRecipeCreator()
         {
-            EditorGUILayout.LabelField("Base Recipe Details", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField("Base Recipe Identity", EditorStyles.boldLabel);
             _recipeName = EditorGUILayout.TextField("Recipe Name", _recipeName);
+            _recipeSprite = (Sprite)EditorGUILayout.ObjectField("Drink Sprite (Icon)", _recipeSprite, typeof(Sprite), false);
             _cityOrigin = (CityOrigin)EditorGUILayout.EnumPopup("Target Audience / Origin", _cityOrigin);
             _isUnlocked = EditorGUILayout.Toggle("Unlocked By Default", _isUnlocked);
             _description = EditorGUILayout.TextField("Description", _description);
 
-            EditorGUILayout.Space(5);
+            EditorGUILayout.Space(8);
             _hasSpecialEffect = EditorGUILayout.Toggle("Has Inherent Effect", _hasSpecialEffect);
             if (_hasSpecialEffect)
             {
@@ -72,8 +80,8 @@ namespace MolecularBrewing.Preparation.Editor
                 _inherentEffectDesc = EditorGUILayout.TextField("Inherent Effect Desc", _inherentEffectDesc);
             }
 
-            EditorGUILayout.Space(10);
-            EditorGUILayout.LabelField("Base Ingredients (Placed on Tray)", EditorStyles.boldLabel);
+            EditorGUILayout.Space(12);
+            EditorGUILayout.LabelField("Base Raw Ingredients (Placed on Tray)", EditorStyles.boldLabel);
             int count = EditorGUILayout.IntSlider("Ingredient Count", _selectedIngredients.Count, 0, 7);
 
             while (_selectedIngredients.Count < count) _selectedIngredients.Add(null);
@@ -84,30 +92,125 @@ namespace MolecularBrewing.Preparation.Editor
                 _selectedIngredients[i] = (RawIngredientItemData)EditorGUILayout.ObjectField($"Ingredient {i + 1}", _selectedIngredients[i], typeof(RawIngredientItemData), false);
             }
 
-            EditorGUILayout.Space(10);
-            EditorGUILayout.LabelField("Calculated Synthesis Molecules (Auto)", EditorStyles.boldLabel);
-            Dictionary<string, int> moleculeYield = CalculateMolecules(_selectedIngredients);
+            EditorGUILayout.Space(14);
+            EditorGUILayout.LabelField("Synthesis Molecule Composition & Count", EditorStyles.boldLabel);
 
-            if (moleculeYield.Count == 0)
+            Dictionary<string, int> availableMolecules = CalculateMolecules(_selectedIngredients);
+            List<string> availableList = availableMolecules.Keys.ToList();
+
+            _manualMoleculeOverride = EditorGUILayout.ToggleLeft("<b>Custom Precision Molecule Definition (Override auto-calculation)</b>", _manualMoleculeOverride, new GUIStyle(EditorStyles.label) { richText = true });
+
+            if (_manualMoleculeOverride)
             {
-                EditorGUILayout.HelpBox("No ingredients selected yet.", MessageType.None);
+                EditorGUILayout.HelpBox("Pick directly from the molecules provided by the selected ingredients above or enter custom names.", MessageType.None);
+
+                // Quick add buttons for available molecules from ingredients
+                if (availableList.Count > 0)
+                {
+                    EditorGUILayout.LabelField("Quick Add from Ingredients Yield:", EditorStyles.miniBoldLabel);
+                    EditorGUILayout.BeginHorizontal();
+                    foreach (var kvp in availableMolecules)
+                    {
+                        if (GUILayout.Button($"+ {kvp.Key} (x{kvp.Value})", EditorStyles.miniButton))
+                        {
+                            var existing = _customMolecules.Find(m => m.m_moleculeName == kvp.Key);
+                            if (existing != null)
+                            {
+                                existing.m_requiredCount++;
+                            }
+                            else
+                            {
+                                _customMolecules.Add(new MoleculeRequirement { m_moleculeName = kvp.Key, m_requiredCount = kvp.Value });
+                            }
+                        }
+                    }
+                    EditorGUILayout.EndHorizontal();
+                    EditorGUILayout.Space(5);
+                }
+
+                EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+
+                int indexToRemove = -1;
+                for (int i = 0; i < _customMolecules.Count; i++)
+                {
+                    EditorGUILayout.BeginHorizontal();
+
+                    // If we have available molecules from ingredients, show dropdown picker
+                    if (availableList.Count > 0)
+                    {
+                        List<string> options = new List<string>(availableList) { "[Custom Text...]" };
+                        int currentIndex = options.IndexOf(_customMolecules[i].m_moleculeName);
+                        if (currentIndex == -1) currentIndex = options.Count - 1; // Custom
+
+                        int newIndex = EditorGUILayout.Popup(currentIndex, options.ToArray(), GUILayout.Width(170));
+                        if (newIndex < availableList.Count)
+                        {
+                            _customMolecules[i].m_moleculeName = availableList[newIndex];
+                        }
+                        else if (currentIndex != options.Count - 1)
+                        {
+                            _customMolecules[i].m_moleculeName = "CustomMolecule";
+                        }
+                    }
+
+                    _customMolecules[i].m_moleculeName = EditorGUILayout.TextField(_customMolecules[i].m_moleculeName);
+                    _customMolecules[i].m_requiredCount = EditorGUILayout.IntField("Count", Mathf.Max(1, _customMolecules[i].m_requiredCount), GUILayout.Width(110));
+
+                    if (GUILayout.Button("✖", GUILayout.Width(25)))
+                    {
+                        indexToRemove = i;
+                    }
+                    EditorGUILayout.EndHorizontal();
+                }
+
+                if (indexToRemove >= 0 && indexToRemove < _customMolecules.Count)
+                {
+                    _customMolecules.RemoveAt(indexToRemove);
+                    GUIUtility.ExitGUI();
+                }
+
+                EditorGUILayout.Space(5);
+                EditorGUILayout.BeginHorizontal();
+                if (GUILayout.Button("+ Add Molecule Row", GUILayout.Height(24)))
+                {
+                    string defaultName = availableList.Count > 0 ? availableList[0] : "Caffeine";
+                    _customMolecules.Add(new MoleculeRequirement { m_moleculeName = defaultName, m_requiredCount = 1 });
+                }
+                if (GUILayout.Button("🔄 Sync All from Ingredients", GUILayout.Height(24)))
+                {
+                    SyncCustomFromIngredients();
+                }
+                if (GUILayout.Button("🗑️ Clear", GUILayout.Width(60), GUILayout.Height(24)))
+                {
+                    _customMolecules.Clear();
+                }
+                EditorGUILayout.EndHorizontal();
+
+                EditorGUILayout.EndVertical();
             }
             else
             {
-                EditorGUILayout.BeginVertical(EditorStyles.helpBox);
-                int totalMolecules = 0;
-                foreach (var kvp in moleculeYield)
+                if (availableMolecules.Count == 0)
                 {
-                    EditorGUILayout.LabelField($"• {kvp.Value}x {kvp.Key}");
-                    totalMolecules += kvp.Value;
+                    EditorGUILayout.HelpBox("No ingredients selected yet.", MessageType.None);
                 }
-                EditorGUILayout.LabelField($"<b>Total Molecules:</b> {totalMolecules}", new GUIStyle(EditorStyles.label) { richText = true });
-                EditorGUILayout.EndVertical();
+                else
+                {
+                    EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+                    int totalMolecules = 0;
+                    foreach (var kvp in availableMolecules)
+                    {
+                        EditorGUILayout.LabelField($"• {kvp.Value}x {kvp.Key}");
+                        totalMolecules += kvp.Value;
+                    }
+                    EditorGUILayout.LabelField($"<b>Total Auto Molecules:</b> {totalMolecules}", new GUIStyle(EditorStyles.label) { richText = true });
+                    EditorGUILayout.EndVertical();
+                }
             }
 
-            EditorGUILayout.Space(15);
+            EditorGUILayout.Space(18);
             GUI.backgroundColor = new Color(0.3f, 0.8f, 0.4f, 1f);
-            if (GUILayout.Button("💾 Save Base Recipe Asset", GUILayout.Height(36)))
+            if (GUILayout.Button("💾 Save Base Recipe Asset", GUILayout.Height(40)))
             {
                 SaveBaseRecipeAsset();
             }
@@ -133,31 +236,33 @@ namespace MolecularBrewing.Preparation.Editor
                 _selectedAdditives[i] = (RawIngredientItemData)EditorGUILayout.ObjectField($"Additive {i + 1}", _selectedAdditives[i], typeof(RawIngredientItemData), false);
             }
 
-            EditorGUILayout.Space(15);
+            EditorGUILayout.Space(18);
             GUI.backgroundColor = new Color(0.2f, 0.7f, 0.8f, 1f);
-            if (GUILayout.Button("💾 Save Additive Effect Asset", GUILayout.Height(36)))
+            if (GUILayout.Button("💾 Save Additive Effect Asset", GUILayout.Height(40)))
             {
                 SaveAdditiveEffectAsset();
             }
             GUI.backgroundColor = Color.white;
         }
 
-        private void DrawBatchGenerator()
-        {
-            EditorGUILayout.LabelField("Demo Presets Generator", EditorStyles.boldLabel);
-            EditorGUILayout.HelpBox("Click below to automatically generate all 6 Base Recipes across the 3 Columns (Neo / Mix / Heart) and all 5 Additive Effect Rules!", MessageType.Info);
-
-            EditorGUILayout.Space(15);
-            if (GUILayout.Button("⚡ Generate All Default Recipes & Additive Effects", GUILayout.Height(42)))
-            {
-                GenerateAllDemoData();
-            }
-        }
-
         #endregion
 
 
         #region Tools and Utilities
+
+        private void SyncCustomFromIngredients()
+        {
+            _customMolecules.Clear();
+            Dictionary<string, int> dict = CalculateMolecules(_selectedIngredients);
+            foreach (var kvp in dict)
+            {
+                _customMolecules.Add(new MoleculeRequirement
+                {
+                    m_moleculeName = kvp.Key,
+                    m_requiredCount = kvp.Value
+                });
+            }
+        }
 
         private Dictionary<string, int> CalculateMolecules(List<RawIngredientItemData> ingredients)
         {
@@ -200,6 +305,7 @@ namespace MolecularBrewing.Preparation.Editor
 
             asset.m_recipeId = $"recipe_{cleanName.ToLowerInvariant()}";
             asset.m_recipeName = _recipeName;
+            asset.m_icon = _recipeSprite;
             asset.m_cityOrigin = _cityOrigin;
             asset.m_description = _description;
             asset.m_isUnlocked = _isUnlocked;
@@ -207,7 +313,15 @@ namespace MolecularBrewing.Preparation.Editor
             asset.m_inherentEffectName = _inherentEffectName;
             asset.m_inherentEffectDescription = _inherentEffectDesc;
             asset.m_requiredRawIngredients = new List<RawIngredientItemData>(_selectedIngredients);
-            asset.AutoCalculateMoleculesFromIngredients();
+
+            if (_manualMoleculeOverride && _customMolecules.Count > 0)
+            {
+                asset.m_requiredMolecules = new List<MoleculeRequirement>(_customMolecules);
+            }
+            else
+            {
+                asset.AutoCalculateMoleculesFromIngredients();
+            }
 
             EditorUtility.SetDirty(asset);
             AssetDatabase.SaveAssets();
@@ -250,121 +364,34 @@ namespace MolecularBrewing.Preparation.Editor
             EditorUtility.DisplayDialog("Success", $"Additive effect saved at:\n{path}", "OK");
         }
 
-        public static void GenerateAllDemoData()
-        {
-            string rawFolder = "Assets/_/DATABASE/RawIngredients";
-            string recipeFolder = "Assets/_/DATABASE/Recipes";
-            string effectFolder = "Assets/_/DATABASE/AdditiveEffects";
-
-            if (!Directory.Exists(recipeFolder)) Directory.CreateDirectory(recipeFolder);
-            if (!Directory.Exists(effectFolder)) Directory.CreateDirectory(effectFolder);
-
-            var cafe = AssetDatabase.LoadAssetAtPath<RawIngredientItemData>($"{rawFolder}/Ing_CoffeeBeans.asset");
-            var the = AssetDatabase.LoadAssetAtPath<RawIngredientItemData>($"{rawFolder}/Ing_TeaLeaves.asset");
-            var eau = AssetDatabase.LoadAssetAtPath<RawIngredientItemData>($"{rawFolder}/Ing_Water.asset");
-            var lait = AssetDatabase.LoadAssetAtPath<RawIngredientItemData>($"{rawFolder}/Ing_Milk.asset");
-            var menthe = AssetDatabase.LoadAssetAtPath<RawIngredientItemData>($"{rawFolder}/Ing_MintLeaves.asset");
-            var nickel = AssetDatabase.LoadAssetAtPath<RawIngredientItemData>($"{rawFolder}/Ing_LiquidNickel.asset");
-
-            var lunardust = AssetDatabase.LoadAssetAtPath<RawIngredientItemData>($"{rawFolder}/Ing_LunarDust.asset");
-            var dragontears = AssetDatabase.LoadAssetAtPath<RawIngredientItemData>($"{rawFolder}/Ing_Dragontears.asset");
-            var bluepeppers = AssetDatabase.LoadAssetAtPath<RawIngredientItemData>($"{rawFolder}/Ing_BluePeppers.asset");
-            var icedlava = AssetDatabase.LoadAssetAtPath<RawIngredientItemData>($"{rawFolder}/Ing_IcedLava.asset");
-
-            // 1. Column Neo (Neo Fremio)
-            CreateBaseRecipe(recipeFolder, "Espresso Overclock", CityOrigin.Neo, "Double dose de caféine pure pour les esprits survoltés de Neo Fremio.", true, false, "", "", new List<RawIngredientItemData> { cafe, cafe, eau });
-            CreateBaseRecipe(recipeFolder, "Cyber Tonic Nickel", CityOrigin.Neo, "Infusion tonifiante enrichie en ions conducteurs.", false, true, "Conduction Neuronale", "Accélère le traitement de l'information.", new List<RawIngredientItemData> { cafe, nickel, eau });
-
-            // 2. Column Mix (Both Cities)
-            CreateBaseRecipe(recipeFolder, "Thermal Glitch Brew", CityOrigin.Mix, "Café infusé à la menthe cybernétique, apprécié des deux cultures.", true, false, "", "", new List<RawIngredientItemData> { cafe, menthe, eau });
-            CreateBaseRecipe(recipeFolder, "Universal Harmony", CityOrigin.Mix, "Alliance subtile de thé et café pour réconcilier les citadins.", false, false, "", "", new List<RawIngredientItemData> { cafe, the, eau });
-
-            // 3. Column Heart (Heartopia)
-            CreateBaseRecipe(recipeFolder, "Matcha Neuro-Latte", CityOrigin.Heart, "Infusion végétale émulsionnée avec solvant lacté d'Heartopia.", true, false, "", "", new List<RawIngredientItemData> { the, lait, eau });
-            CreateBaseRecipe(recipeFolder, "Sweet Mint Elixir", CityOrigin.Heart, "Élixir rafraîchissant à base de menthe pure d'Heartopia.", false, true, "Sérénité Végétale", "Procure un état d'apaisement absolu.", new List<RawIngredientItemData> { the, menthe, eau });
-
-            // 4. Additive Synergy Effects
-            CreateAdditiveEffect(effectFolder, "Transe Onirique", "Plonge le buveur dans une transe créative profonde.", true, new List<RawIngredientItemData> { lunardust });
-            CreateAdditiveEffect(effectFolder, "Extase Mystique", "Déclenche une vague d'euphorie et de clairvoyance.", true, new List<RawIngredientItemData> { dragontears });
-            CreateAdditiveEffect(effectFolder, "Choc Thermique", "Génère une chaleur intense stimulant le métabolisme.", true, new List<RawIngredientItemData> { bluepeppers });
-            CreateAdditiveEffect(effectFolder, "Cryo-Stase", "Refroidit instantanément le système et élimine les toxines.", true, new List<RawIngredientItemData> { icedlava });
-            CreateAdditiveEffect(effectFolder, "Éveil Céleste", "Synergie puissante alliant rêve lucide et béatitude mystique.", false, new List<RawIngredientItemData> { lunardust, dragontears });
-
-            AssetDatabase.SaveAssets();
-            AssetDatabase.Refresh();
-            Debug.Log("<color=green><b>[RecipeDataGenerator]</b> Successfully generated Base Recipes and Additive Effects in DATABASE!</color>");
-        }
-
-        private static void CreateBaseRecipe(string folder, string name, CityOrigin origin, string desc, bool unlocked, bool hasEffect, string effName, string effDesc, List<RawIngredientItemData> ingredients)
-        {
-            string cleanName = name.Replace(" ", "_");
-            string path = $"{folder}/Recipe_{cleanName}.asset";
-
-            RecipeData asset = AssetDatabase.LoadAssetAtPath<RecipeData>(path);
-            if (asset == null)
-            {
-                asset = CreateInstance<RecipeData>();
-                AssetDatabase.CreateAsset(asset, path);
-            }
-
-            asset.m_recipeId = $"recipe_{cleanName.ToLowerInvariant()}";
-            asset.m_recipeName = name;
-            asset.m_cityOrigin = origin;
-            asset.m_description = desc;
-            asset.m_isUnlocked = unlocked;
-            asset.m_hasSpecialEffect = hasEffect;
-            asset.m_inherentEffectName = effName;
-            asset.m_inherentEffectDescription = effDesc;
-            asset.m_requiredRawIngredients = new List<RawIngredientItemData>(ingredients);
-            asset.AutoCalculateMoleculesFromIngredients();
-
-            EditorUtility.SetDirty(asset);
-        }
-
-        private static void CreateAdditiveEffect(string folder, string name, string desc, bool unlocked, List<RawIngredientItemData> additives)
-        {
-            string cleanName = name.Replace(" ", "_");
-            string path = $"{folder}/Effect_{cleanName}.asset";
-
-            AdditiveEffectData asset = AssetDatabase.LoadAssetAtPath<AdditiveEffectData>(path);
-            if (asset == null)
-            {
-                asset = CreateInstance<AdditiveEffectData>();
-                AssetDatabase.CreateAsset(asset, path);
-            }
-
-            asset.m_effectId = $"effect_{cleanName.ToLowerInvariant()}";
-            asset.m_effectName = name;
-            asset.m_effectDescription = desc;
-            asset.m_isUnlocked = unlocked;
-            asset.m_requiredAdditives = new List<RawIngredientItemData>(additives);
-
-            EditorUtility.SetDirty(asset);
-        }
-
         #endregion
 
 
         #region Private and Protected
 
-        private Vector2 _scrollPos;
         private int _selectedTab = 0;
+        private Vector2 _scrollPos;
 
-        // Base Recipe Form
-        private string _recipeName = "New Cyber Drink";
+        // Base Recipe Creator state
+        private string _recipeName = "New Drink Recipe";
+        private Sprite _recipeSprite;
         private CityOrigin _cityOrigin = CityOrigin.Neo;
-        private string _description = "Description de la formulation.";
         private bool _isUnlocked = false;
+        private string _description = "Description de la boisson...";
         private bool _hasSpecialEffect = false;
         private string _inherentEffectName = "";
         private string _inherentEffectDesc = "";
-        private List<RawIngredientItemData> _selectedIngredients = new List<RawIngredientItemData>();
+        private readonly List<RawIngredientItemData> _selectedIngredients = new List<RawIngredientItemData>();
 
-        // Additive Effect Form
-        private string _effectName = "New Additive Synergy";
-        private string _effectDesc = "Description de l'effet produit par cet additif.";
+        // Custom Molecule requirements
+        private bool _manualMoleculeOverride = false;
+        private readonly List<MoleculeRequirement> _customMolecules = new List<MoleculeRequirement>();
+
+        // Additive Effect Creator state
+        private string _effectName = "New Additive Effect";
         private bool _effectUnlocked = false;
-        private List<RawIngredientItemData> _selectedAdditives = new List<RawIngredientItemData>();
+        private string _effectDesc = "Description de l'effet...";
+        private readonly List<RawIngredientItemData> _selectedAdditives = new List<RawIngredientItemData>();
 
         #endregion
     }
